@@ -9,15 +9,21 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Eigen>
 
-// decompose the polygon if it's concave, output the convex polygons index
+// decompose the polygon if concave, output the convex polygons
+// Example:
+//      std::vector<ros_msgs::Vector2> sweeping_area;
+//      std::vector<std::vector<ros_msgs::Vector2> > split_sweeping_area;       
+//      PolygonDecomposition* pdc = new PolygonDecomposition();
+//      pdc->decomposePolygon(sweeping_area, split_sweeping_area);
+//      delete pdc;
 class PolygonDecomposition {
 public:
     PolygonDecomposition();     // constructor
     ~PolygonDecomposition();    // deconstructor
-    // set polygon
-    void resetPolygon(std::vector<ros_msgs::Vector2> in_polygon);
+    // reset polygon
+    void resetPolygon(std::vector<ros_msgs::Vector2> in_polygon);   
     // interface
-    bool decomposePolygon(std::vector<ros_msgs::Vector2> in_polygon,
+    bool decomposePolygon(const std::vector<ros_msgs::Vector2>& in_polygon,
                           std::vector<std::vector<ros_msgs::Vector2> >& out_result_polygons);
 private:
     // convert `ros_msgs::Vector2` to `cv::Point2f`, reorder the polygon counterclockwise
@@ -33,23 +39,26 @@ private:
     double calCrossProduct(ros_msgs::Vector2 pt_01, ros_msgs::Vector2 pt_02, ros_msgs::Vector2 pt_03);
     // take out the polygon_cv from the given index in `_polygon_cv`
     void getCvPolygonFromIdx(const std::vector<int>& in_polygon_idx, std::vector<cv::Point2f>& out_polygon_cv);
-    // ********************************************************
-    // ******************** algorithm part ********************
+    
+
+    // ******************************** algorithm part ********************************
     // the decomposition algorithm is proposed by ZHU chuanmin, TANG jun and XU tiangui 
     // from College of Mechanical Engineering, Tongji University, Shanghai, China
     // the paper link : https://wenku.baidu.com/view/a3ccf9abf705cc1755270974.html
-    // ********************************************************
+    // the reason I take this algorithm cause I am a TongjiER
+    
     // compute the visible points with given a concave point idx
     bool findVisiblePointsInSearchRange(const std::vector<int>& in_concave_poly, 
                                         int in_concave_pt_idx, std::vector<int>& out_visible_points_idx);
+    // compute the area where the potential split point address
     bool findSearchRange(const std::vector<int>& in_concave_poly, int in_concave_pt_idx, std::vector<int>& out_searched_points_idx);
+    // return true if the given search_pt is visible to concave_pt
     bool judgeVisibility(const std::vector<int>& in_concave_poly, int in_concave_pt_idx, int in_search_point_idx);
-    // TODO:
+    // compute the power of visible points in search area intended to find the split point
     bool calPowerOfVisiblePoints(const std::vector<int>& in_concave_poly, 
                                  int in_concave_pt_idx,
                                  const std::vector<int>& in_visible_points_idx, 
                                  std::vector<double>& out_power_vector);
-    // bool calAngleBisector(int in_concave_pt_idx, double out_slope);
     
     // ture if all polygons in `_result_polygon_idx` are convex
     // compute the concave polygons' index in `_result_polygon_idx`
@@ -58,6 +67,7 @@ private:
     bool getIntersectPoints(cv::Point2f line01_start, cv::Point2f line01_end,
                             cv::Point2f line02_start, cv::Point2f line02_end,
                             cv::Point2f& intersect_pt);
+    // split the concave polygon into 2 polygons with given concave point and split point
     bool getSplitPolygons(const std::vector<int>& in_concave_poly, int in_concave_pt_idx, int in_split_pt_idx,              
                           std::vector<std::vector<int> >& out_polys);
 

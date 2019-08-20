@@ -1,4 +1,15 @@
 #include "decomposition.h"
+/*
+    For topographic consideration, use index of each point instead of points directly
+    It enable us to use Int to represent a point along with the point's topography
+    The key to understand these codes is to distinguish what the index points to
+    Which is the core of GIS thinking
+
+    Specifically, we have origin_polygon, index_polygon
+    origin_polygon is the data set, index_polygon is the index of the origin_polygon
+    You have to make sure the index is for origin_polygon or index_polygon
+
+*/
 
 PolygonDecomposition::PolygonDecomposition () {
 
@@ -9,10 +20,11 @@ PolygonDecomposition::~PolygonDecomposition () {
 }
 
 // interface
-// the `in_polygon` size is 20 at most, unnecessary to pass the reference
-bool PolygonDecomposition::decomposePolygon(std::vector<ros_msgs::Vector2> in_polygon,
+// input, output data type is `ros_msgs::Vector2`
+// use cv::Point in computing for the convenience of OpenCV lib 
+bool PolygonDecomposition::decomposePolygon(const std::vector<ros_msgs::Vector2>& in_polygon,
                                             std::vector<std::vector<ros_msgs::Vector2> >& out_result_polygons) {
-    
+
     if (!convertRos2CvPolygon(in_polygon)) {
         std::cout << "convertRos2CvPolygon() failed" << std::endl;
         return false;
@@ -36,7 +48,7 @@ bool PolygonDecomposition::decomposePolygon(std::vector<ros_msgs::Vector2> in_po
 // that's feature point P_{i} which determines the polygon's direction (clockwise or counterclockwise)
 // use vec(P_{i-1}, P{i}) cross vec(P_{i}, P_{i+1}) to judge polygon's direction 
 // save `in_polygon` in the private varible `_polygon_cv` counterclockwise
-// initial private varible `_result_polygon_idx`
+// initial private varible `_result_polygon_idx` which carries the index of all polygons
 bool PolygonDecomposition::convertRos2CvPolygon(const std::vector<ros_msgs::Vector2>& in_polygon) {
     if (in_polygon.size() < 3) {
         std::cout << "the input is not a polygon with the size of " << in_polygon.size() << std::endl;
@@ -99,6 +111,7 @@ bool PolygonDecomposition::convertRos2CvPolygon(const std::vector<ros_msgs::Vect
     return true;
 }
 
+// the `in_polygon_idx` index to origin_polygon
 void PolygonDecomposition::getCvPolygonFromIdx(const std::vector<int>& in_polygon_idx, 
                                                std::vector<cv::Point2f>& out_polygon_cv) {
     out_polygon_cv.clear();
@@ -170,8 +183,9 @@ bool PolygonDecomposition::getConcavePointsIdx(const std::vector<int>& in_idx,
     return true;
 }
 
-// construct the `_result_polygon_idx` with the arranged `_polygon_cv` 
+// construct the `_result_polygon_idx` which index the arranged `_polygon_cv` 
 // simplify the conventiol algorithm to statisfy my demand
+// update `_result_polygon_idx` when there is still a concave polygon in it
 // compute `_output_polygon_idx` to save the decomposed multi-convex-polygons
 bool PolygonDecomposition::decomposeIt() {
     int count = 0;
@@ -232,7 +246,6 @@ bool PolygonDecomposition::decomposeIt() {
         }
         _result_polygon_idx = copy_result_polygon_idx;
         
-        // for debug
         std::cout << "the result is" << std::endl;
         for (int i = 0; i < _result_polygon_idx.size(); ++i) {
             for (int j = 0; j < _result_polygon_idx[i].size(); ++j) {
@@ -247,6 +260,7 @@ bool PolygonDecomposition::decomposeIt() {
     return true;
 }
 
+// when finished the decomposition, `_result_polygon_idx` to the output variable
 bool PolygonDecomposition::convertCv2RosPolygon(std::vector<std::vector<ros_msgs::Vector2> >& out_polygon_ros) {    
     out_polygon_ros.clear();
     for (int i = 0; i < _result_polygon_idx.size(); ++i) {
@@ -278,13 +292,18 @@ double PolygonDecomposition::calCrossProduct(ros_msgs::Vector2 pt_01, ros_msgs::
     return (vec_01_x * vec_02_y - vec_01_y * vec_02_x);
 }
 
-// the given `in_pt_idx` is the first concave point counterclockwise
+// the given `in_pt_idx` is the first concave point counterclockwise from the start point of the polygon
+// `in_poly` index to origin_polygon `_polygon_cv`
+// `in_pt_idx` index to index_polygon `_in_poly`
+// so by the twice index, we can get the point's data according to an Int using `_polygon[in_poly[in_pt_idx]]`
+// Visible Points definition in the paper mentioned in .h file
+// `out_pts_idx` is index to index_polygon `in_poly`
 bool PolygonDecomposition::findVisiblePointsInSearchRange(const std::vector<int>& in_poly, 
                                                           int in_pt_idx, 
                                                           std::vector<int>& out_pts_idx) {
     out_pts_idx.clear();
 
-    std::vector<int> search_all_pts_idx;
+    std::vector<int> search_all_pts_idx;    // index for index_polygon `in_poly`
 
     if (!findSearchRange(in_poly, in_pt_idx, search_all_pts_idx)) {
         std::cout << "findSearchRange() failed" << std::endl;
@@ -315,6 +334,7 @@ bool PolygonDecomposition::findVisiblePointsInSearchRange(const std::vector<int>
 // F(x, y) > 0, the Point(x, y) is in the right region of vector(A, B)
 // otherwise in the right region
 // in this function, we search for the left region
+// `out_points_idx` is index for index_polygon `in_poly`
 bool PolygonDecomposition::findSearchRange(const std::vector<int>& in_poly,
                                            int in_pt_idx, 
                                            std::vector<int>& out_points_idx) {
@@ -338,7 +358,8 @@ bool PolygonDecomposition::findSearchRange(const std::vector<int>& in_poly,
     return true;
 }       
 
-// TODO: the way I implement this is really stupid and low efficient
+// TODO: a little problem here, though it works for the complicated situation 
+// the way I implement this is really stupid and low efficient
 // When I search the methods to judge the visible points of polygon
 // the algorithm is fucking huge!!!
 bool PolygonDecomposition::judgeVisibility(const std::vector<int>& in_poly, 
@@ -401,8 +422,9 @@ bool PolygonDecomposition::isAllConvex(std::vector<int>& out_concave_polygon_idx
     return is_all_convex;
 }
 
-// from https://stackoverrun.com/cn/q/1900650
-// an efficient way to calculate the intersection of 2 lines
+// this algorithm is proposed by 
+// https://stackoverrun.com/cn/q/1900650
+// an efficient way to compute the intersection of 2 lines
 bool PolygonDecomposition::getIntersectPoints(cv::Point2f line01_start, cv::Point2f line01_end,
                                               cv::Point2f line02_start, cv::Point2f line02_end,
                                               cv::Point2f& intersect_pt) {
@@ -417,6 +439,9 @@ bool PolygonDecomposition::getIntersectPoints(cv::Point2f line01_start, cv::Poin
     return true;                                              
 }
 
+// the full mark of power is 200
+// if the visible point is a concave, power adds 100, the other 100 is 100 times the absolute of 2 lines' cosine
+// that guarantees if there is concave point, the power of it will be the highest
 bool PolygonDecomposition::calPowerOfVisiblePoints(const std::vector<int>& in_poly, 
                                                    int in_concave_idx,
                                                    const std::vector<int>& in_pts_idx, 
@@ -463,7 +488,10 @@ bool PolygonDecomposition::calPowerOfVisiblePoints(const std::vector<int>& in_po
     return true;                
 }
 
-
+// ATTENTION: `out_polys` is index to origin_polygon `_polygon_cv` stored in `_result_polygons_idx`
+// Since the polygon is arranged in counterclockwise
+// when you get the 2 split points one of which is the first concave point 
+// it's easy to split the concave polygons into 2 polygons
 bool PolygonDecomposition::getSplitPolygons(const std::vector<int>& in_poly, int in_concave_pt_idx, int in_split_pt_idx,
                                             std::vector<std::vector<int> >& out_polys) {
     out_polys.clear();

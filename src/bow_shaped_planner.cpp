@@ -15,7 +15,6 @@ bool BowShapedPlanner::coveragePlan(const ros_msgs::Odometry& odometry,
                                     const std::vector<ros_msgs::Vector2>& sweeping_area,
                                     ros_msgs::Trajectory& traj) {
     if(1) {
-        
         std::vector<ros_msgs::Vector2> my_sweeping_area = {};
         for (int i = 0; i < sweeping_area.size(); ++i) {
             my_sweeping_area.push_back(sweeping_area[i]);
@@ -23,39 +22,33 @@ bool BowShapedPlanner::coveragePlan(const ros_msgs::Odometry& odometry,
         my_sweeping_area.push_back(sweeping_area[0]);
         // use varible `my_sweeping_area` to replace `sweeping_area`
         // ATTENTION: `my_sweeping_area` has the same first and last element
-        // LOG(INFO) << "finish copying sweeping area";
         std::cout << "finish copying sweeping area"<< std::endl;
 
         if (!getRotateAngle(my_sweeping_area)) {
-            // LOG(INFO) << "get rotate angle failed";
             std::cout << "get rotate angle failed" << std::endl;
             return false;
         }
 
         std::vector<ros_msgs::Vector2> my_sweeping_area_rotate = {};
         if(!rotateSweepArea(my_sweeping_area, _rotate_angle, my_sweeping_area_rotate)) {
-            // LOG(INFO) << "rotate sweep area failed";
             std::cout << "rotate sweep area failed" << std::endl;
             return false;
         }
         
         std::vector<std::pair<ros_msgs::Vector2, ros_msgs::Vector2> > ori_path;
         if (!getTurnPointOfBowShape(my_sweeping_area_rotate, ori_path)) {
-            // LOG(INFO) << "get turn point of bow-shape failed";
             std::cout << "get turn point of bow-shape failed" << std::endl;
             return false;
         }
 
         std::vector<ros_msgs::Vector2> result_path;
         if (!getStraightPointOfBowShape(ori_path, _ref_point_long_dist, _ref_point_short_dist, result_path)) {
-            // LOG(INFO) << "get straight line points failed";
             std::cout << "get straight line points failed" << std::endl;
             return false;
         }
 
         std::vector<ros_msgs::Vector2> result_path_rotate;
         if (!rotateSweepArea(result_path, -_rotate_angle, result_path_rotate)) {
-            // LOG(INFO) << "get result path rotate failed";
             std::cout << "get result path rotate failed" << std::endl;
             return false;
         }
@@ -71,16 +64,13 @@ bool BowShapedPlanner::coveragePlan(const ros_msgs::Odometry& odometry,
         std::cout << "coverage plan succeed" << std::endl;
         return true;
     } else {
-
         return false;
     }
-
 }
 
 bool BowShapedPlanner::getRotateAngle(const std::vector<ros_msgs::Vector2>& in_sweeping_area) {
     // make sure sweeping area is a polygon
     if (in_sweeping_area.size() < 3) {
-        // LOG(INFO) << "the sweeping area is not a polygon in `getRotationAngle`";
         std::cout << "the sweeping area is not a polygon in `getRotationAngle`" << std::endl;
         return false;
     }
@@ -106,7 +96,6 @@ bool BowShapedPlanner::rotateSweepArea(const std::vector<ros_msgs::Vector2>& in_
                                        double in_angle,
                                        std::vector<ros_msgs::Vector2>& out_sweeping_area) {
     if (in_sweeping_area.size() < 4) {
-        // LOG(INFO) << "the sweeping area is not a polygon in `rotateSweepArea`";
         std::cout << "the sweeping area is not a polygon in `rotateSweepArea`" << std::endl;
         return false;
     }
@@ -126,7 +115,6 @@ bool BowShapedPlanner::rotateSweepArea(const std::vector<ros_msgs::Vector2>& in_
 bool BowShapedPlanner::getBoundOfSweepArea(const std::vector<ros_msgs::Vector2> in_sweeping_area,
                                            double& min_x, double& min_y, double& max_x, double& max_y) {
     if (in_sweeping_area.size() < 4) {
-        // LOG(INFO) << "the sweeping area is not a polygon in `getBoundOfSweepArea`";
         std::cout << "the sweeping area is not a polygon in `getBoundOfSweepArea`" << std::endl;
         return false;
     }
@@ -180,14 +168,12 @@ bool BowShapedPlanner::getBoundOfSweepArea(const std::vector<ros_msgs::Vector2> 
 bool BowShapedPlanner::getTurnPointOfBowShape(const std::vector<ros_msgs::Vector2>& in_sweeping_area,
                                               std::vector<std::pair<ros_msgs::Vector2, ros_msgs::Vector2> >& out_ori_path) {
     if (in_sweeping_area.size() < 4) {
-        // LOG(INFO) << "sweeping area is not a polygon in getTurnPoint func";
         std::cout << "sweeping area is not a polygon in getTurnPoint func" << std::endl;
         return false;
     }
     
     double min_x, min_y, max_x, max_y;
     if (!getBoundOfSweepArea(in_sweeping_area, min_x, min_y, max_x, max_y)) {
-        // LOG(INFO) << "get bound of sweep area failed";
         std::cout << "get bound of sweep area failed" << std::endl;
         return false;
     }
@@ -203,9 +189,7 @@ bool BowShapedPlanner::getTurnPointOfBowShape(const std::vector<ros_msgs::Vector
             if (getPointFromX(in_sweeping_area[i], in_sweeping_area[i + 1], cutline, tmp_pt)) {
                 tmp_vec.push_back(tmp_pt);
             } else {
-                // LOG(INFO) << "get point from " << cutline << "  GET A PROBLEM";
-                // std::cout << "get point from " << cutline << "  GET A PROBLEM" << std::endl;
-                // return false;
+
             }
         }
         // arrange in order
@@ -272,14 +256,12 @@ bool BowShapedPlanner::getStraightPointOfBowShape(const std::vector<std::pair<ro
                                                   std::vector<ros_msgs::Vector2>& out_result_path) {
     std::vector<ros_msgs::Vector2> tmp_path;
     for (int i = 0; i < in_ori_path.size() - 1; ++i) {
-        if (!getLongLinePoint(in_ori_path[i], in_long_dist, tmp_path)) {
-            // LOG(INFO) << i << ": get long line point failed";     
+        if (!getLongLinePoint(in_ori_path[i], in_long_dist, tmp_path)) {    
             std::cout << ": get long line point failed" << std::endl;
             return false;
         }
         out_result_path.insert(out_result_path.end(), tmp_path.begin(), tmp_path.end());
         if (!getShortLinePoint(in_ori_path[i], in_ori_path[i + 1], in_short_dist, tmp_path)) {
-            // LOG(INFO) << i << ": get short line point failed";
             std::cout << ": get short line point failed" << std::endl;
             return false;
         }
@@ -287,7 +269,6 @@ bool BowShapedPlanner::getStraightPointOfBowShape(const std::vector<std::pair<ro
     }
 
     if (!getLongLinePoint(in_ori_path[in_ori_path.size() - 1], in_long_dist, tmp_path)) {
-        // LOG(INFO) << "the last get long line point failed";
         std::cout << "the last get long line point failed" << std::endl;
         return false;
     }
@@ -304,7 +285,6 @@ bool BowShapedPlanner::getLongLinePoint(const std::pair<ros_msgs::Vector2, ros_m
     out_part_traject.clear();
 
     if (in_pt_pair.first.x != in_pt_pair.second.x) {
-        // LOG(INFO) << "the given pt pair's X is not equal";
         std::cout << "the given pt pair's X is not equal" << std::endl;
         return false;
     }
