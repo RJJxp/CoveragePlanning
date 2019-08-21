@@ -14,6 +14,9 @@
 // input `odometry` is not used, only to uniform the interface in tergeo
 // `sweeping_area` is the given convex polygon
 // `traj` is the path planed
+// Example:
+//      BowShapedPlanner* bsp = new BowShapePlanner();
+//      bsp->coveragePlan();
 class BowShapedPlanner {
 public:
     BowShapedPlanner();
@@ -22,7 +25,7 @@ public:
     // bow shaped coverage plan by rjp
     bool coveragePlan(const ros_msgs::Odometry& odometry,
                       const std::vector<ros_msgs::Vector2>& sweeping_area,
-                      ros_msgs::Trajectory& traj);
+                      std::vector<ros_msgs::Trajectory>& multi_traj);
 private:
     // calculate the private variable `_rotate_distance`
     bool getRotateAngle(const std::vector<ros_msgs::Vector2>& in_sweeping_area, double& rotate_angle);

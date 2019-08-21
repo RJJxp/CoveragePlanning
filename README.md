@@ -6,7 +6,9 @@ Decompose the given polygon if concave
 
 Compute a bow-shape complete coverage path for every polygon
 
+![origin_polygon](./doc/origin_01.png)
 
+![result_coverage](./doc/result_01.png)
 
 ## 1. Dependency
 

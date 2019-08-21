@@ -2,10 +2,10 @@
 #include "decomposition.h"
 
 BowShapedPlanner::BowShapedPlanner(){
-    _offset_distance = 5;
-    _space_distance = 8;
-    _ref_point_long_dist = 60;
-    _ref_point_short_dist = 10;
+    _offset_distance = 0;
+    _space_distance = 10;
+    _ref_point_long_dist = 20;
+    _ref_point_short_dist = 20;
 }
 
 BowShapedPlanner::~BowShapedPlanner(){
@@ -14,7 +14,8 @@ BowShapedPlanner::~BowShapedPlanner(){
 
 bool BowShapedPlanner::coveragePlan(const ros_msgs::Odometry& odometry,
                                     const std::vector<ros_msgs::Vector2>& sweeping_area,
-                                    ros_msgs::Trajectory& traj) {
+                                    std::vector<ros_msgs::Trajectory>& multi_traj) {
+    multi_traj.clear();
     if(1) {
         PolygonDecomposition pdc;
         std::vector<std::vector<ros_msgs::Vector2> > split_sweeping_area;
@@ -23,9 +24,7 @@ bool BowShapedPlanner::coveragePlan(const ros_msgs::Odometry& odometry,
         for (int i = 0; i < split_sweeping_area.size(); ++i) {
             ros_msgs::Trajectory sub_traj;
             plan4ConvexPolygon(split_sweeping_area[i], sub_traj);
-            for (int j = 0; j < sub_traj.poses.size(); ++j) {
-                traj.poses.push_back(sub_traj.poses[j]);
-            }
+            multi_traj.push_back(sub_traj);
         }
         return true;
     } else {
