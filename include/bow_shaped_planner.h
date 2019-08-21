@@ -72,7 +72,7 @@ private:
     // TODO: get value of them from config file including the sweeping area
     // TODO: temporarily ignore the transform between 2 coordinate systems of map and world
     // TODO: ambiguous distance unit: pixel or m? right now they are pixel
-    double _offset_distance;        // the distance offset inside the sweeping area to avoid collision, more like a buffer distance
+    double _offset_distance;        // the distance offset inside the sweeping area to avoid collision, larger than 0
     double _space_distance;         // the distance between the 2 bow-shape long lines
     double _ref_point_long_dist;    // in the long bow-shape line with only start point and end point
                                     // add an extra ref_point every _ref_point_long_dist for the following planning

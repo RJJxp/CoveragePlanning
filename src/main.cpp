@@ -83,7 +83,12 @@ void createSweepingArea(std::vector<cv::Point2f>& sweeping_area_cv, std::vector<
     // sweeping_area_cv.push_back(cv::Point2f(200, 200));
     // sweeping_area_cv.push_back(cv::Point2f(200, 700));
     
-    
+    // test 05
+    // sweeping_area_cv.push_back(cv::Point2f(150, 200));
+    // sweeping_area_cv.push_back(cv::Point2f(100, 100));
+    // sweeping_area_cv.push_back(cv::Point2f(400, 100));
+    // sweeping_area_cv.push_back(cv::Point2f(350, 200));
+
     for (int i = 0; i < sweeping_area_cv.size(); ++i) {
         ros_msgs::Vector2 tmp_vec;
         tmp_vec.x = sweeping_area_cv[i].x;
@@ -120,10 +125,10 @@ void drawSweepAreanAndPath(const std::vector<cv::Point2f>& sweeping_area_cv,
 
     // draw sweeping area
     for (int i = 0; i < sweeping_area_cv.size() - 1; ++i) {
-        cv::circle(my_panel, sweeping_area_cv[i], 3, cv::Scalar(200, 0 ,0), CV_FILLED);
+        // cv::circle(my_panel, sweeping_area_cv[i], 3, cv::Scalar(200, 0 ,0), CV_FILLED);
         cv::line(my_panel, sweeping_area_cv[i], sweeping_area_cv[i + 1], cv::Scalar(0, 200, 0), 2);
     }
-    cv::circle(my_panel, sweeping_area_cv[sweeping_area_cv.size() - 1], 3, cv::Scalar(200, 0 ,0), CV_FILLED);
+    // cv::circle(my_panel, sweeping_area_cv[sweeping_area_cv.size() - 1], 3, cv::Scalar(200, 0 ,0), CV_FILLED);
     cv::line(my_panel, sweeping_area_cv[sweeping_area_cv.size() - 1], sweeping_area_cv[0], cv::Scalar(0, 200, 0), 2);
     // cv::polylines(my_panel, sweeping_area_cv, false, cv::Scalar(45, 90, 135), 4, 0, 0);
     
@@ -146,14 +151,15 @@ void drawSweepAreanAndPath(const std::vector<cv::Point2f>& sweeping_area_cv,
 
     // draw sweeping area
     for (int i = 0; i < sweeping_area_cv.size() - 1; ++i) {
-        cv::circle(my_panel, sweeping_area_cv[i], 3, cv::Scalar(200, 0 ,0), CV_FILLED);
+        // cv::circle(my_panel, sweeping_area_cv[i], 3, cv::Scalar(200, 0 ,0), CV_FILLED);
         cv::line(my_panel, sweeping_area_cv[i], sweeping_area_cv[i + 1], cv::Scalar(0, 200, 0), 2);
     }
-    cv::circle(my_panel, sweeping_area_cv[sweeping_area_cv.size() - 1], 3, cv::Scalar(200, 0 ,0), CV_FILLED);
+    // cv::circle(my_panel, sweeping_area_cv[sweeping_area_cv.size() - 1], 3, cv::Scalar(200, 0 ,0), CV_FILLED);
     cv::line(my_panel, sweeping_area_cv[sweeping_area_cv.size() - 1], sweeping_area_cv[0], cv::Scalar(0, 200, 0), 2);
    
     // draw each trajectory
     for (int i = 0; i < traject_ros.size(); ++i) {
+        // if (i == 0) continue;
         for (int j = 0; j < traject_ros[i].poses.size() - 1; ++j) {
             double A_x = traject_ros[i].poses[j].position.x;
             double A_y = traject_ros[i].poses[j].position.y;
