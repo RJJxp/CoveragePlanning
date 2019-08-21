@@ -364,7 +364,6 @@ bool PolygonDecomposition::findSearchRange(const std::vector<int>& in_poly,
 // the algorithm is fucking huge!!!
 bool PolygonDecomposition::judgeVisibility(const std::vector<int>& in_poly, 
                                            int in_concave_pt_idx, int in_search_pt_idx) {
-
     int pt_A = in_concave_pt_idx;
     int pt_A_front = (pt_A == 0) ? (in_poly.size() - 1) : (pt_A - 1);
     int pt_B = in_search_pt_idx;
@@ -384,7 +383,7 @@ bool PolygonDecomposition::judgeVisibility(const std::vector<int>& in_poly,
         cv::Point2f intersect_pt;
         if (getIntersectPoints(line01_start, line01_end, line02_start, line02_end, intersect_pt)) {
             if ((line01_end.x - intersect_pt.x) * (line01_start.x - intersect_pt.x) <= 0 &&
-                (line02_end.x - intersect_pt.x) * (line02_start.x - intersect_pt.x) <= 0) {
+                (line02_end.x - intersect_pt.x) * (line02_start.x - intersect_pt.x) < 0) {
                     // the 2 line segments intersect
                     return false;
                 }
