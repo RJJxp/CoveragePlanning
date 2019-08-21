@@ -17,13 +17,14 @@ int main(int argc, char* argv[]) {
 
     // initial the sweeping_area 
     createSweepingArea(sweeping_area_cv, sweeping_area);
-
+/*
     std::vector<std::vector<ros_msgs::Vector2> > split_polygons;
     PolygonDecomposition* pde = new PolygonDecomposition();
     pde->decomposePolygon(sweeping_area, split_polygons);
     std::cout << "success" << std::endl;
+*/
 
-/*   
+   
     BowShapedPlanner* bsp = new BowShapedPlanner();
     if (!bsp->coveragePlan(odom, sweeping_area, traject)) {
         std::cout << "converge plan failed" << std::endl;
@@ -37,31 +38,32 @@ int main(int argc, char* argv[]) {
         delete bsp;
         bsp = NULL;
     }
-*/
+
     return 0;
 }
 
 void createSweepingArea(std::vector<cv::Point2f>& sweeping_area_cv, std::vector<ros_msgs::Vector2>& sweep_area) {
-/*
-    // test 01
-    sweeping_area_cv.push_back(cv::Point2f(100, 300));
-    sweeping_area_cv.push_back(cv::Point2f(150, 200));
-    sweeping_area_cv.push_back(cv::Point2f(100, 100));
-    sweeping_area_cv.push_back(cv::Point2f(400, 100));
-    sweeping_area_cv.push_back(cv::Point2f(350, 200));
-    sweeping_area_cv.push_back(cv::Point2f(400, 300));
-*/  
 
-/*
-    // test 02
-    sweeping_area_cv.push_back(cv::Point2f(100, 100));
-    sweeping_area_cv.push_back(cv::Point2f(100, 300));
-    sweeping_area_cv.push_back(cv::Point2f(200, 300));
-    sweeping_area_cv.push_back(cv::Point2f(200, 500));
-    sweeping_area_cv.push_back(cv::Point2f(500, 500));
-    sweeping_area_cv.push_back(cv::Point2f(500, 100));
-*/
+    // // test 01
+    // sweeping_area_cv.push_back(cv::Point2f(100, 300));
+    // sweeping_area_cv.push_back(cv::Point2f(150, 200));
+    // sweeping_area_cv.push_back(cv::Point2f(100, 100));
+    // sweeping_area_cv.push_back(cv::Point2f(400, 100));
+    // sweeping_area_cv.push_back(cv::Point2f(350, 200));
+    // sweeping_area_cv.push_back(cv::Point2f(400, 300));
+ 
 
+
+    // // test 02
+    // sweeping_area_cv.push_back(cv::Point2f(100, 100));
+    // sweeping_area_cv.push_back(cv::Point2f(100, 300));
+    // sweeping_area_cv.push_back(cv::Point2f(200, 300));
+    // sweeping_area_cv.push_back(cv::Point2f(200, 500));
+    // sweeping_area_cv.push_back(cv::Point2f(500, 500));
+    // sweeping_area_cv.push_back(cv::Point2f(500, 100));
+
+
+    // test 03
     sweeping_area_cv.push_back(cv::Point2f(100, 400));
     sweeping_area_cv.push_back(cv::Point2f(200, 300));
     sweeping_area_cv.push_back(cv::Point2f(100, 100));
@@ -70,6 +72,15 @@ void createSweepingArea(std::vector<cv::Point2f>& sweeping_area_cv, std::vector<
     sweeping_area_cv.push_back(cv::Point2f(500, 200));
     sweeping_area_cv.push_back(cv::Point2f(300, 300));
     sweeping_area_cv.push_back(cv::Point2f(500, 400));
+
+    // // test 04
+    // sweeping_area_cv.push_back(cv::Point2f(100, 700));
+    // sweeping_area_cv.push_back(cv::Point2f(100, 100));
+    // sweeping_area_cv.push_back(cv::Point2f(700, 100));
+    // sweeping_area_cv.push_back(cv::Point2f(700, 200));
+    // sweeping_area_cv.push_back(cv::Point2f(200, 200));
+    // sweeping_area_cv.push_back(cv::Point2f(200, 700));
+    
     
     for (int i = 0; i < sweeping_area_cv.size(); ++i) {
         ros_msgs::Vector2 tmp_vec;

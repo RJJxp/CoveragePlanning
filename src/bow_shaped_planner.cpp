@@ -1,4 +1,5 @@
 #include "bow_shaped_planner.h"
+#include "decomposition.h"
 
 BowShapedPlanner::BowShapedPlanner(){
     _offset_distance = 5;
@@ -15,22 +16,45 @@ bool BowShapedPlanner::coveragePlan(const ros_msgs::Odometry& odometry,
                                     const std::vector<ros_msgs::Vector2>& sweeping_area,
                                     ros_msgs::Trajectory& traj) {
     if(1) {
-        std::vector<ros_msgs::Vector2> my_sweeping_area = {};
-        for (int i = 0; i < sweeping_area.size(); ++i) {
-            my_sweeping_area.push_back(sweeping_area[i]);
+        PolygonDecomposition pdc;
+        std::vector<std::vector<ros_msgs::Vector2> > split_sweeping_area;
+        pdc.decomposePolygon(sweeping_area, split_sweeping_area);
+        std::cout << "****************  decompose finished  ****************" << std::endl;
+        for (int i = 0; i < split_sweeping_area.size(); ++i) {
+            ros_msgs::Trajectory sub_traj;
+            plan4ConvexPolygon(split_sweeping_area[i], sub_traj);
+            for (int j = 0; j < sub_traj.poses.size(); ++j) {
+                traj.poses.push_back(sub_traj.poses[j]);
+            }
         }
-        my_sweeping_area.push_back(sweeping_area[0]);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool BowShapedPlanner::plan4ConvexPolygon(const std::vector<ros_msgs::Vector2>& in_sweeping_area,
+                                          ros_msgs::Trajectory& out_traj) {
+    std::vector<ros_msgs::Vector2> my_sweeping_area = {};
+        for (int i = 0; i < in_sweeping_area.size(); ++i) {
+            my_sweeping_area.push_back(in_sweeping_area[i]);
+        }
+
+        my_sweeping_area.push_back(in_sweeping_area[0]);
         // use varible `my_sweeping_area` to replace `sweeping_area`
         // ATTENTION: `my_sweeping_area` has the same first and last element
         std::cout << "finish copying sweeping area"<< std::endl;
 
-        if (!getRotateAngle(my_sweeping_area)) {
+        double rotate_angle = 0.0;
+        if (!getRotateAngle(my_sweeping_area, rotate_angle)) {
             std::cout << "get rotate angle failed" << std::endl;
             return false;
         }
+        // for debug 
+        _rotate_angle = rotate_angle;
 
         std::vector<ros_msgs::Vector2> my_sweeping_area_rotate = {};
-        if(!rotateSweepArea(my_sweeping_area, _rotate_angle, my_sweeping_area_rotate)) {
+        if(!rotateSweepArea(my_sweeping_area, rotate_angle, my_sweeping_area_rotate)) {
             std::cout << "rotate sweep area failed" << std::endl;
             return false;
         }
@@ -48,7 +72,7 @@ bool BowShapedPlanner::coveragePlan(const ros_msgs::Odometry& odometry,
         }
 
         std::vector<ros_msgs::Vector2> result_path_rotate;
-        if (!rotateSweepArea(result_path, -_rotate_angle, result_path_rotate)) {
+        if (!rotateSweepArea(result_path, -rotate_angle, result_path_rotate)) {
             std::cout << "get result path rotate failed" << std::endl;
             return false;
         }
@@ -59,16 +83,14 @@ bool BowShapedPlanner::coveragePlan(const ros_msgs::Odometry& odometry,
             tmp_pose.position.x = result_path_rotate[i].x;
             tmp_pose.position.y = result_path_rotate[i].y;
             tmp_pose.position.z = 0;
-            traj.poses.push_back(tmp_pose);
+            out_traj.poses.push_back(tmp_pose);
         }
         std::cout << "coverage plan succeed" << std::endl;
         return true;
-    } else {
-        return false;
-    }
 }
 
-bool BowShapedPlanner::getRotateAngle(const std::vector<ros_msgs::Vector2>& in_sweeping_area) {
+bool BowShapedPlanner::getRotateAngle(const std::vector<ros_msgs::Vector2>& in_sweeping_area,
+                                      double& rotate_angle) {
     // make sure sweeping area is a polygon
     if (in_sweeping_area.size() < 3) {
         std::cout << "the sweeping area is not a polygon in `getRotationAngle`" << std::endl;
@@ -76,19 +98,21 @@ bool BowShapedPlanner::getRotateAngle(const std::vector<ros_msgs::Vector2>& in_s
     }
 
     double dist, del_x, del_y;
-    for (int i = 0; i < in_sweeping_area.size(); ++i) {
+    for (int i = 0; i < in_sweeping_area.size() - 1; ++i) {
         del_x = in_sweeping_area[i + 1].x - in_sweeping_area[i].x;
         del_y = in_sweeping_area[i + 1].y - in_sweeping_area[i].y;
         if (i == 0) {   // the first point
             dist = del_x * del_x + del_y * del_y;
+            rotate_angle = M_PI / 2 - atan2f(del_y, del_x);
         } else {    // the other points
             if (dist < del_x * del_x + del_y * del_y) {
                 dist = del_x * del_x + del_y * del_y;
-                _rotate_angle = M_PI / 2 - atan2f(del_y, del_x);
+                rotate_angle = M_PI / 2 - atan2f(del_y, del_x);
             }
         }
+        std::cout << i << ": " << dist << std::endl;
     }
-    std::cout << "get rotate angle succeed, the angle is " << _rotate_angle << " rad" << std::endl; 
+    std::cout << "get rotate angle succeed, the angle is " << rotate_angle << " rad" << std::endl; 
     return true;
 }
 

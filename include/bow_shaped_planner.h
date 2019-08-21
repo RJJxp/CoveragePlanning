@@ -25,7 +25,7 @@ public:
                       ros_msgs::Trajectory& traj);
 private:
     // calculate the private variable `_rotate_distance`
-    bool getRotateAngle(const std::vector<ros_msgs::Vector2>& in_sweeping_area);
+    bool getRotateAngle(const std::vector<ros_msgs::Vector2>& in_sweeping_area, double& rotate_angle);
     // rotate the sweeping_area
     // rotate the longest edge to pi/2
     bool rotateSweepArea(const std::vector<ros_msgs::Vector2>& in_sweeping_area,
@@ -59,6 +59,9 @@ private:
     // calculate the angle between the X axis positive direction and vector(pt1, pt2)
     // TODO: the getAngle function is not good with input variable
     double getAngle(const ros_msgs::Vector2& pt1, const ros_msgs::Vector2& pt2);
+    // plan for a convex polygon
+    bool plan4ConvexPolygon(const std::vector<ros_msgs::Vector2>& in_sweeping_area, ros_msgs::Trajectory& out_traj);
+
 private:
     double _rotate_angle;       // pi/2 - angle of the shortest line of the sweeping area
 
