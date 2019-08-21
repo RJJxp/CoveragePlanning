@@ -2,7 +2,7 @@
 #include "decomposition.h"
 
 BowShapedPlanner::BowShapedPlanner(){
-    _offset_distance = 0;
+    _offset_distance = 5;
     _space_distance = 10;
     _ref_point_long_dist = 20;
     _ref_point_short_dist = 20;
@@ -207,7 +207,7 @@ bool BowShapedPlanner::getTurnPointOfBowShape(const std::vector<ros_msgs::Vector
     bool order_flag = true;
     double cutline = min_x + _offset_distance;
     
-    while (cutline + _space_distance < max_x - _offset_distance) {
+    while (cutline < max_x - _offset_distance) {
         for (int i = 0; i < in_sweeping_area.size(); ++i) {
             if (getPointFromX(in_sweeping_area[i], in_sweeping_area[i + 1], cutline, tmp_pt)) {
                 tmp_vec.push_back(tmp_pt);
