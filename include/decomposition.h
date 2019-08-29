@@ -9,6 +9,11 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Eigen>
 
+struct MyPoint {
+    double x;
+    double y;
+};
+
 // decompose the polygon if concave, output the convex polygons
 // Example:
 //      std::vector<ros_msgs::Vector2> sweeping_area;

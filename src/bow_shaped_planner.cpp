@@ -212,7 +212,7 @@ bool BowShapedPlanner::getTurnPointOfBowShape(const std::vector<ros_msgs::Vector
             if (getPointFromX(in_sweeping_area[i], in_sweeping_area[i + 1], cutline, tmp_pt)) {
                 tmp_vec.push_back(tmp_pt);
             } else {
-
+                // the cutline is parallel to edge of polygon
             }
         }
         // arrange in order
@@ -263,7 +263,7 @@ bool BowShapedPlanner::getPointFromX(const ros_msgs::Vector2& in_pt1, const ros_
                                      double in_x, ros_msgs::Vector2& out_pt) {
     if ((in_pt1.x - in_x) * (in_pt2.x - in_x) > 0) return false;
 
-    // the line of in_pt1 and in_pt2 is parallel to y axis
+    // the line of in_pt1 and in_pt2 is parallel to cut line
     if (in_pt2.x == in_pt1.x) return false;
 
     double scale = (in_x - in_pt1.x) / (in_pt2.x - in_pt1.x);
