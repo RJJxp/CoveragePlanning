@@ -3,9 +3,9 @@
 #include "bow_shaped_planner.h"
 #include "decomposition.h"
 
-void createSweepingArea(std::vector<cv::Point2f>& sweeping_area_cv, std::vector<ros_msgs::Vector2>& sweep_area);
-void drawSweepAreanAndPath(const std::vector<cv::Point2f>& sweeping_area_cv, const ros_msgs::Trajectory& traject_ros);
-void drawSweepAreanAndPath(const std::vector<cv::Point2f>& sweeping_area_cv, const std::vector<ros_msgs::Trajectory>& traject_ros);
+void createSweepingArea(std::vector<cv::Point2f>& sweeping_area_cv, std::vector<RjpPoint>& sweep_area);
+void drawSweepAreanAndPath(const std::vector<cv::Point2f>& sweeping_area_cv, const RjpTrajectory& traject_ros);
+void drawSweepAreanAndPath(const std::vector<cv::Point2f>& sweeping_area_cv, const std::vector<RjpTrajectory>& traject_ros);
 
 
 int main(int argc, char* argv[]) {    
@@ -13,14 +13,14 @@ int main(int argc, char* argv[]) {
     std::vector<cv::Point2f> sweeping_area_cv;
     std::vector<cv::Point2f> traject_cv;
     // for calculation
-    std::vector<ros_msgs::Vector2> sweeping_area;
-    std::vector<ros_msgs::Trajectory> traject;
+    std::vector<RjpPoint> sweeping_area;
+    std::vector<RjpTrajectory> traject;
     ros_msgs::Odometry odom;
 
     // initial the sweeping_area 
     createSweepingArea(sweeping_area_cv, sweeping_area);
 /*
-    std::vector<std::vector<ros_msgs::Vector2> > split_polygons;
+    std::vector<std::vector<RjpPoint> > split_polygons;
     PolygonDecomposition* pde = new PolygonDecomposition();
     pde->decomposePolygon(sweeping_area, split_polygons);
     std::cout << "success" << std::endl;
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-void createSweepingArea(std::vector<cv::Point2f>& sweeping_area_cv, std::vector<ros_msgs::Vector2>& sweep_area) {
+void createSweepingArea(std::vector<cv::Point2f>& sweeping_area_cv, std::vector<RjpPoint>& sweep_area) {
 
     // // test 01
     // sweeping_area_cv.push_back(cv::Point2f(100, 300));
@@ -90,7 +90,7 @@ void createSweepingArea(std::vector<cv::Point2f>& sweeping_area_cv, std::vector<
     // sweeping_area_cv.push_back(cv::Point2f(350, 200));
 
     for (int i = 0; i < sweeping_area_cv.size(); ++i) {
-        ros_msgs::Vector2 tmp_vec;
+        RjpPoint tmp_vec;
         tmp_vec.x = sweeping_area_cv[i].x;
         tmp_vec.y = sweeping_area_cv[i].y;
         sweep_area.push_back(tmp_vec);
@@ -108,13 +108,13 @@ void createSweepingArea(std::vector<cv::Point2f>& sweeping_area_cv, std::vector<
 }
 
 void drawSweepAreanAndPath(const std::vector<cv::Point2f>& sweeping_area_cv, 
-                           const ros_msgs::Trajectory& traject_ros) {
+                           const RjpTrajectory& traject_ros) {
     // transform the tracject_ros to traject_cv
     std::vector<cv::Point2f> traject_cv;
     cv::Point2f tmp_pt;
-    for (int i = 0; i < traject_ros.poses.size(); ++i) {
-        tmp_pt.x = traject_ros.poses[i].position.x;
-        tmp_pt.y = traject_ros.poses[i].position.y;
+    for (int i = 0; i < traject_ros.pts.size(); ++i) {
+        tmp_pt.x = traject_ros.pts[i].x;
+        tmp_pt.y = traject_ros.pts[i].y;
         traject_cv.push_back(tmp_pt);
     }
     std::cout << "traject_cv size " << traject_cv.size() << std::endl;
@@ -146,7 +146,7 @@ void drawSweepAreanAndPath(const std::vector<cv::Point2f>& sweeping_area_cv,
 }
 
 void drawSweepAreanAndPath(const std::vector<cv::Point2f>& sweeping_area_cv, 
-                           const std::vector<ros_msgs::Trajectory>& traject_ros) {
+                           const std::vector<RjpTrajectory>& traject_ros) {
     cv::Mat my_panel(1000, 1000, CV_8UC3, cv::Scalar(40, 0, 0));
 
     // draw sweeping area
@@ -160,19 +160,19 @@ void drawSweepAreanAndPath(const std::vector<cv::Point2f>& sweeping_area_cv,
     // draw each trajectory
     for (int i = 0; i < traject_ros.size(); ++i) {
         // if (i == 0) continue;
-        for (int j = 0; j < traject_ros[i].poses.size() - 1; ++j) {
-            double A_x = traject_ros[i].poses[j].position.x;
-            double A_y = traject_ros[i].poses[j].position.y;
+        for (int j = 0; j < traject_ros[i].pts.size() - 1; ++j) {
+            double A_x = traject_ros[i].pts[j].x;
+            double A_y = traject_ros[i].pts[j].y;
             cv::Point2f A_pt(A_x, A_y);
-            double B_x = traject_ros[i].poses[j + 1].position.x;
-            double B_y = traject_ros[i].poses[j + 1].position.y;
+            double B_x = traject_ros[i].pts[j + 1].x;
+            double B_y = traject_ros[i].pts[j + 1].y;
             cv::Point2f B_pt(B_x, B_y);
             
             cv::circle(my_panel, A_pt, 3, cv::Scalar(200, 0 ,0), CV_FILLED);
             cv::line(my_panel, A_pt, B_pt, cv::Scalar(255, 255, 0), 1);
         }
-        double x = traject_ros[i].poses[traject_ros[i].poses.size() - 1].position.x;
-        double y = traject_ros[i].poses[traject_ros[i].poses.size() - 1].position.y;
+        double x = traject_ros[i].pts[traject_ros[i].pts.size() - 1].x;
+        double y = traject_ros[i].pts[traject_ros[i].pts.size() - 1].y;
         cv::Point2f tmp_pt(x, y);
         cv::circle(my_panel, tmp_pt, 3, cv::Scalar(200, 0 ,0), CV_FILLED);
     }

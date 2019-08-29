@@ -13,16 +13,16 @@ BowShapedPlanner::~BowShapedPlanner(){
 
 
 bool BowShapedPlanner::coveragePlan(const ros_msgs::Odometry& odometry,
-                                    const std::vector<ros_msgs::Vector2>& sweeping_area,
-                                    std::vector<ros_msgs::Trajectory>& multi_traj) {
+                                    const std::vector<RjpPoint>& sweeping_area,
+                                    std::vector<RjpTrajectory>& multi_traj) {
     multi_traj.clear();
     if(1) {
         PolygonDecomposition pdc;
-        std::vector<std::vector<ros_msgs::Vector2> > split_sweeping_area;
+        std::vector<std::vector<RjpPoint> > split_sweeping_area;
         pdc.decomposePolygon(sweeping_area, split_sweeping_area);
         std::cout << "****************  decompose finished  ****************" << std::endl;
         for (int i = 0; i < split_sweeping_area.size(); ++i) {
-            ros_msgs::Trajectory sub_traj;
+            RjpTrajectory sub_traj;
             plan4ConvexPolygon(split_sweeping_area[i], sub_traj);
             multi_traj.push_back(sub_traj);
         }
@@ -32,9 +32,9 @@ bool BowShapedPlanner::coveragePlan(const ros_msgs::Odometry& odometry,
     }
 }
 
-bool BowShapedPlanner::plan4ConvexPolygon(const std::vector<ros_msgs::Vector2>& in_sweeping_area,
-                                          ros_msgs::Trajectory& out_traj) {
-    std::vector<ros_msgs::Vector2> my_sweeping_area = {};
+bool BowShapedPlanner::plan4ConvexPolygon(const std::vector<RjpPoint>& in_sweeping_area,
+                                          RjpTrajectory& out_traj) {
+    std::vector<RjpPoint> my_sweeping_area = {};
         for (int i = 0; i < in_sweeping_area.size(); ++i) {
             my_sweeping_area.push_back(in_sweeping_area[i]);
         }
@@ -52,43 +52,42 @@ bool BowShapedPlanner::plan4ConvexPolygon(const std::vector<ros_msgs::Vector2>& 
         // for debug 
         _rotate_angle = rotate_angle;
 
-        std::vector<ros_msgs::Vector2> my_sweeping_area_rotate = {};
+        std::vector<RjpPoint> my_sweeping_area_rotate = {};
         if(!rotateSweepArea(my_sweeping_area, rotate_angle, my_sweeping_area_rotate)) {
             std::cout << "rotate sweep area failed" << std::endl;
             return false;
         }
         
-        std::vector<std::pair<ros_msgs::Vector2, ros_msgs::Vector2> > ori_path;
+        std::vector<std::pair<RjpPoint, RjpPoint> > ori_path;
         if (!getTurnPointOfBowShape(my_sweeping_area_rotate, ori_path)) {
             std::cout << "get turn point of bow-shape failed" << std::endl;
             return false;
         }
 
-        std::vector<ros_msgs::Vector2> result_path;
+        std::vector<RjpPoint> result_path;
         if (!getStraightPointOfBowShape(ori_path, _ref_point_long_dist, _ref_point_short_dist, result_path)) {
             std::cout << "get straight line points failed" << std::endl;
             return false;
         }
 
-        std::vector<ros_msgs::Vector2> result_path_rotate;
+        std::vector<RjpPoint> result_path_rotate;
         if (!rotateSweepArea(result_path, -rotate_angle, result_path_rotate)) {
             std::cout << "get result path rotate failed" << std::endl;
             return false;
         }
 
-        ros_msgs::PoseWithVelocity tmp_pose;
+        RjpPoint tmp_pose;
         for (int i = 0; i < result_path_rotate.size(); ++i) {
             // std::cout << "x " << result_path_rotate[i].x << std::endl << "y " << result_path_rotate[i].y << std::endl;
-            tmp_pose.position.x = result_path_rotate[i].x;
-            tmp_pose.position.y = result_path_rotate[i].y;
-            tmp_pose.position.z = 0;
-            out_traj.poses.push_back(tmp_pose);
+            tmp_pose.x = result_path_rotate[i].x;
+            tmp_pose.y = result_path_rotate[i].y;
+            out_traj.pts.push_back(tmp_pose);
         }
         std::cout << "coverage plan succeed" << std::endl;
         return true;
 }
 
-bool BowShapedPlanner::getRotateAngle(const std::vector<ros_msgs::Vector2>& in_sweeping_area,
+bool BowShapedPlanner::getRotateAngle(const std::vector<RjpPoint>& in_sweeping_area,
                                       double& rotate_angle) {
     // make sure sweeping area is a polygon
     if (in_sweeping_area.size() < 3) {
@@ -109,22 +108,22 @@ bool BowShapedPlanner::getRotateAngle(const std::vector<ros_msgs::Vector2>& in_s
                 rotate_angle = M_PI / 2 - atan2f(del_y, del_x);
             }
         }
-        std::cout << i << ": " << dist << std::endl;
+        // std::cout << i << ": " << dist << std::endl;
     }
     std::cout << "get rotate angle succeed, the angle is " << rotate_angle << " rad" << std::endl; 
     return true;
 }
 
-bool BowShapedPlanner::rotateSweepArea(const std::vector<ros_msgs::Vector2>& in_sweeping_area,
+bool BowShapedPlanner::rotateSweepArea(const std::vector<RjpPoint>& in_sweeping_area,
                                        double in_angle,
-                                       std::vector<ros_msgs::Vector2>& out_sweeping_area) {
+                                       std::vector<RjpPoint>& out_sweeping_area) {
     if (in_sweeping_area.size() < 4) {
         std::cout << "the sweeping area is not a polygon in `rotateSweepArea`" << std::endl;
         return false;
     }
 
     out_sweeping_area.clear();
-    ros_msgs::Vector2 tmp_vec;
+    RjpPoint tmp_vec;
     // rotate counterclockwise
     for (int i = 0;i < in_sweeping_area.size(); ++i) {
         tmp_vec.x = cos(in_angle) * in_sweeping_area[i].x - sin(in_angle) * in_sweeping_area[i].y;
@@ -135,7 +134,7 @@ bool BowShapedPlanner::rotateSweepArea(const std::vector<ros_msgs::Vector2>& in_
     return true;
 }
 
-bool BowShapedPlanner::getBoundOfSweepArea(const std::vector<ros_msgs::Vector2> in_sweeping_area,
+bool BowShapedPlanner::getBoundOfSweepArea(const std::vector<RjpPoint> in_sweeping_area,
                                            double& min_x, double& min_y, double& max_x, double& max_y) {
     if (in_sweeping_area.size() < 4) {
         std::cout << "the sweeping area is not a polygon in `getBoundOfSweepArea`" << std::endl;
@@ -144,22 +143,22 @@ bool BowShapedPlanner::getBoundOfSweepArea(const std::vector<ros_msgs::Vector2> 
 
     // use iter and std function to calculate the min and max
     // auto iter = std::min_element(in_sweeping_area.begin(), in_sweeping_area.end(), 
-    //                         [](const ros_msgs::Vector2 v1, const ros_msgs::Vector2 v2){
+    //                         [](const RjpPoint v1, const RjpPoint v2){
     //                             return v1.x < v2.x;
     //                         });
     // min_x = *iter;
     // iter = std::min_element(in_sweeping_area.begin(), in_sweeping_area.end(), 
-    //                         [](const ros_msgs::Vector2 v1, const ros_msgs::Vector2 v2){
+    //                         [](const RjpPoint v1, const RjpPoint v2){
     //                             return v1.y < v2.y;
     //                         });
     // min_y = *iter;
     // iter = std::max_element(in_sweeping_area.begin(), in_sweeping_area.end(), 
-    //                         [](const ros_msgs::Vector2 v1, const ros_msgs::Vector2 v2){
+    //                         [](const RjpPoint v1, const RjpPoint v2){
     //                             return v1.x < v2.x;
     //                         });
     // max_x = *iter;
     // iter = std::max_element(in_sweeping_area.begin(), in_sweeping_area.end(), 
-    //                         [](const ros_msgs::Vector2 v1, const ros_msgs::Vector2 v2){
+    //                         [](const RjpPoint v1, const RjpPoint v2){
     //                             return v1.y < v2.y;
     //                         });
     // max_y = *iter;
@@ -188,8 +187,8 @@ bool BowShapedPlanner::getBoundOfSweepArea(const std::vector<ros_msgs::Vector2> 
 // the part of cut-line inside the polygon become the long bow-shape line
 // the 2 intersections become the start point and end point, which I call turn point in general 
 // then arrange them in order
-bool BowShapedPlanner::getTurnPointOfBowShape(const std::vector<ros_msgs::Vector2>& in_sweeping_area,
-                                              std::vector<std::pair<ros_msgs::Vector2, ros_msgs::Vector2> >& out_ori_path) {
+bool BowShapedPlanner::getTurnPointOfBowShape(const std::vector<RjpPoint>& in_sweeping_area,
+                                              std::vector<std::pair<RjpPoint, RjpPoint> >& out_ori_path) {
     if (in_sweeping_area.size() < 4) {
         std::cout << "sweeping area is not a polygon in getTurnPoint func" << std::endl;
         return false;
@@ -201,9 +200,9 @@ bool BowShapedPlanner::getTurnPointOfBowShape(const std::vector<ros_msgs::Vector
         return false;
     }
 
-    std::pair<ros_msgs::Vector2, ros_msgs::Vector2> tmp_pair;
-    std::vector<ros_msgs::Vector2> tmp_vec; // every time enter a loop, clear this vector
-    ros_msgs::Vector2 tmp_pt;
+    std::pair<RjpPoint, RjpPoint> tmp_pair;
+    std::vector<RjpPoint> tmp_vec; // every time enter a loop, clear this vector
+    RjpPoint tmp_pt;
     bool order_flag = true;
     double cutline = min_x + _offset_distance;
     
@@ -259,8 +258,8 @@ bool BowShapedPlanner::getTurnPointOfBowShape(const std::vector<ros_msgs::Vector
     return true;
 }
 
-bool BowShapedPlanner::getPointFromX(const ros_msgs::Vector2& in_pt1, const ros_msgs::Vector2& in_pt2, 
-                                     double in_x, ros_msgs::Vector2& out_pt) {
+bool BowShapedPlanner::getPointFromX(const RjpPoint& in_pt1, const RjpPoint& in_pt2, 
+                                     double in_x, RjpPoint& out_pt) {
     if ((in_pt1.x - in_x) * (in_pt2.x - in_x) > 0) return false;
 
     // the line of in_pt1 and in_pt2 is parallel to cut line
@@ -274,10 +273,10 @@ bool BowShapedPlanner::getPointFromX(const ros_msgs::Vector2& in_pt1, const ros_
 
 // bow-shape long line is parallel with y axis
 // bow-shape short line is parallel with x axis
-bool BowShapedPlanner::getStraightPointOfBowShape(const std::vector<std::pair<ros_msgs::Vector2, ros_msgs::Vector2> >& in_ori_path,
+bool BowShapedPlanner::getStraightPointOfBowShape(const std::vector<std::pair<RjpPoint, RjpPoint> >& in_ori_path,
                                                   double in_long_dist, double in_short_dist,
-                                                  std::vector<ros_msgs::Vector2>& out_result_path) {
-    std::vector<ros_msgs::Vector2> tmp_path;
+                                                  std::vector<RjpPoint>& out_result_path) {
+    std::vector<RjpPoint> tmp_path;
     for (int i = 0; i < in_ori_path.size() - 1; ++i) {
         if (!getLongLinePoint(in_ori_path[i], in_long_dist, tmp_path)) {    
             std::cout << ": get long line point failed" << std::endl;
@@ -302,9 +301,9 @@ bool BowShapedPlanner::getStraightPointOfBowShape(const std::vector<std::pair<ro
 }
 
 // the straight points in long bow-shape line range from [start_pt, end_pt)
-bool BowShapedPlanner::getLongLinePoint(const std::pair<ros_msgs::Vector2, ros_msgs::Vector2>& in_pt_pair,
+bool BowShapedPlanner::getLongLinePoint(const std::pair<RjpPoint, RjpPoint>& in_pt_pair,
                                         double long_dist,
-                                        std::vector<ros_msgs::Vector2>& out_part_traject) {
+                                        std::vector<RjpPoint>& out_part_traject) {
     out_part_traject.clear();
 
     if (in_pt_pair.first.x != in_pt_pair.second.x) {
@@ -318,7 +317,7 @@ bool BowShapedPlanner::getLongLinePoint(const std::pair<ros_msgs::Vector2, ros_m
         long_dist = -long_dist;
     }
 
-    ros_msgs::Vector2 tmp_pt = in_pt_pair.first;
+    RjpPoint tmp_pt = in_pt_pair.first;
     out_part_traject.push_back(tmp_pt);
     length_flag = length_flag - long_dist;
     while (length * length_flag > 0) {
@@ -331,10 +330,10 @@ bool BowShapedPlanner::getLongLinePoint(const std::pair<ros_msgs::Vector2, ros_m
 
 // the straight points in short bow-shape line range from [pair_01.second, pair_02.first)
 // move short dist every time along the vector(pair_01.second, pair_02.first)
-bool BowShapedPlanner::getShortLinePoint(const std::pair<ros_msgs::Vector2, ros_msgs::Vector2>& in_pt_pair_01,
-                                         const std::pair<ros_msgs::Vector2, ros_msgs::Vector2>& in_pt_pair_02,
+bool BowShapedPlanner::getShortLinePoint(const std::pair<RjpPoint, RjpPoint>& in_pt_pair_01,
+                                         const std::pair<RjpPoint, RjpPoint>& in_pt_pair_02,
                                          double short_dist,
-                                         std::vector<ros_msgs::Vector2>& out_part_traject) {
+                                         std::vector<RjpPoint>& out_part_traject) {
     out_part_traject.clear();
     double length = in_pt_pair_02.first.x - in_pt_pair_01.second.x;
     double slope = (in_pt_pair_02.first.y - in_pt_pair_01.second.y) / length;
@@ -345,7 +344,7 @@ bool BowShapedPlanner::getShortLinePoint(const std::pair<ros_msgs::Vector2, ros_
         short_dist = -short_dist;
     }
     
-    ros_msgs::Vector2 tmp_pt = in_pt_pair_01.second;
+    RjpPoint tmp_pt = in_pt_pair_01.second;
     out_part_traject.push_back(tmp_pt);
     length_flag = length_flag - short_dist * fabs(cos(angle));
     while (length * length_flag > 0) {
@@ -357,7 +356,7 @@ bool BowShapedPlanner::getShortLinePoint(const std::pair<ros_msgs::Vector2, ros_
     return true;
 }
 
-double BowShapedPlanner::getAngle(const ros_msgs::Vector2& pt1, const ros_msgs::Vector2& pt2) {
+double BowShapedPlanner::getAngle(const RjpPoint& pt1, const RjpPoint& pt2) {
     // parallel with axis y
     if (pt1.x == pt2.x) {
         if (pt1.y < pt2.y) {

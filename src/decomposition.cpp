@@ -20,10 +20,10 @@ PolygonDecomposition::~PolygonDecomposition () {
 }
 
 // interface
-// input, output data type is `ros_msgs::Vector2`
+// input, output data type is `RjpPoint`
 // use cv::Point in computing for the convenience of OpenCV lib 
-bool PolygonDecomposition::decomposePolygon(const std::vector<ros_msgs::Vector2>& in_polygon,
-                                            std::vector<std::vector<ros_msgs::Vector2> >& out_result_polygons) {
+bool PolygonDecomposition::decomposePolygon(const std::vector<RjpPoint>& in_polygon,
+                                            std::vector<std::vector<RjpPoint> >& out_result_polygons) {
 
     if (!convertRos2CvPolygon(in_polygon)) {
         std::cout << "convertRos2CvPolygon() failed" << std::endl;
@@ -49,7 +49,7 @@ bool PolygonDecomposition::decomposePolygon(const std::vector<ros_msgs::Vector2>
 // use vec(P_{i-1}, P{i}) cross vec(P_{i}, P_{i+1}) to judge polygon's direction 
 // save `in_polygon` in the private varible `_polygon_cv` counterclockwise
 // initial private varible `_result_polygon_idx` which carries the index of all polygons
-bool PolygonDecomposition::convertRos2CvPolygon(const std::vector<ros_msgs::Vector2>& in_polygon) {
+bool PolygonDecomposition::convertRos2CvPolygon(const std::vector<RjpPoint>& in_polygon) {
     if (in_polygon.size() < 3) {
         std::cout << "the input is not a polygon with the size of " << in_polygon.size() << std::endl;
         return false;
@@ -120,17 +120,6 @@ void PolygonDecomposition::getCvPolygonFromIdx(const std::vector<int>& in_polygo
         // std::cout << "x " << _polygon_cv[in_polygon_idx[i]].x;
         // std::cout << " y " << _polygon_cv[in_polygon_idx[i]].y << std::endl;
         out_polygon_cv.push_back(_polygon_cv[in_polygon_idx[i]]);
-    }
-}
-
-
-void PolygonDecomposition::resetPolygon(std::vector<ros_msgs::Vector2> in_polygon) {
-    // copy the value of `in_polygon` to `_polygon_cv` 
-    for (int i = 0; i < in_polygon.size(); ++i) {
-        cv::Point2f tmp_pt;
-        tmp_pt.x = in_polygon[i].x;
-        tmp_pt.y = in_polygon[i].y;
-        _polygon_cv.push_back(tmp_pt);
     }
 }
 
@@ -261,12 +250,12 @@ bool PolygonDecomposition::decomposeIt() {
 }
 
 // when finished the decomposition, `_result_polygon_idx` to the output variable
-bool PolygonDecomposition::convertCv2RosPolygon(std::vector<std::vector<ros_msgs::Vector2> >& out_polygon_ros) {    
+bool PolygonDecomposition::convertCv2RosPolygon(std::vector<std::vector<RjpPoint> >& out_polygon_ros) {    
     out_polygon_ros.clear();
     for (int i = 0; i < _result_polygon_idx.size(); ++i) {
-        std::vector<ros_msgs::Vector2> sub_polygon;
+        std::vector<RjpPoint> sub_polygon;
         for (int j = 0; j < _result_polygon_idx[i].size(); ++j) {
-            ros_msgs::Vector2 sub_polygon_pt;
+            RjpPoint sub_polygon_pt;
             sub_polygon_pt.x = _polygon_cv[_result_polygon_idx[i][j]].x;
             sub_polygon_pt.y = _polygon_cv[_result_polygon_idx[i][j]].y;
             sub_polygon.push_back(sub_polygon_pt);
@@ -284,7 +273,7 @@ double PolygonDecomposition::calCrossProduct(cv::Point2f pt_01, cv::Point2f pt_0
     return (vec_01_x * vec_02_y - vec_01_y * vec_02_x);  
 }
 
-double PolygonDecomposition::calCrossProduct(ros_msgs::Vector2 pt_01, ros_msgs::Vector2 pt_02, ros_msgs::Vector2 pt_03) {
+double PolygonDecomposition::calCrossProduct(RjpPoint pt_01, RjpPoint pt_02, RjpPoint pt_03) {
     double vec_01_x = pt_02.x - pt_01.x;
     double vec_01_y = pt_02.y - pt_01.y;
     double vec_02_x = pt_03.x - pt_02.x;

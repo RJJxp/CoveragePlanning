@@ -1,3 +1,6 @@
+#ifndef _DECOMPOSITION_H_
+#define _DECOMPOSITION_H_
+
 #include <iostream>
 
 #include <ros_msgs/Vector2.h>
@@ -9,15 +12,17 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Eigen>
 
-struct MyPoint {
+struct RjpPoint
+{
     double x;
     double y;
 };
 
+
 // decompose the polygon if concave, output the convex polygons
 // Example:
-//      std::vector<ros_msgs::Vector2> sweeping_area;
-//      std::vector<std::vector<ros_msgs::Vector2> > split_sweeping_area;       
+//      std::vector<RjpPoint> sweeping_area;
+//      std::vector<std::vector<RjpPoint> > split_sweeping_area;       
 //      PolygonDecomposition* pdc = new PolygonDecomposition();
 //      pdc->decomposePolygon(sweeping_area, split_sweeping_area);
 //      delete pdc;
@@ -25,23 +30,21 @@ class PolygonDecomposition {
 public:
     PolygonDecomposition();     // constructor
     ~PolygonDecomposition();    // deconstructor
-    // reset polygon
-    void resetPolygon(std::vector<ros_msgs::Vector2> in_polygon);   
     // interface
-    bool decomposePolygon(const std::vector<ros_msgs::Vector2>& in_polygon,
-                          std::vector<std::vector<ros_msgs::Vector2> >& out_result_polygons);
+    bool decomposePolygon(const std::vector<RjpPoint>& in_polygon,
+                          std::vector<std::vector<RjpPoint> >& out_result_polygons);
 private:
-    // convert `ros_msgs::Vector2` to `cv::Point2f`, reorder the polygon counterclockwise
-    bool convertRos2CvPolygon(const std::vector<ros_msgs::Vector2>& in_polygon);
+    // convert `RjpPoint` to `cv::Point2f`, reorder the polygon counterclockwise
+    bool convertRos2CvPolygon(const std::vector<RjpPoint>& in_polygon);
     // compute the concave point of given polygon
     bool getConcavePointsIdx(const std::vector<int>& in_concave_polygon_idx, std::vector<int>& out_concave_pts_idx);
     // functional: decompose the polygon
     bool decomposeIt();
     // take out the index of `_output_polygon_idx` to fill the `ros_msgs::Vecor2` polygon
-    bool convertCv2RosPolygon(std::vector<std::vector<ros_msgs::Vector2> >& out_polygon_ros);
+    bool convertCv2RosPolygon(std::vector<std::vector<RjpPoint> >& out_polygon_ros);
     // calculate the cross product
     double calCrossProduct(cv::Point2f pt_01, cv::Point2f pt_02, cv::Point2f pt_03);
-    double calCrossProduct(ros_msgs::Vector2 pt_01, ros_msgs::Vector2 pt_02, ros_msgs::Vector2 pt_03);
+    double calCrossProduct(RjpPoint pt_01, RjpPoint pt_02, RjpPoint pt_03);
     // take out the polygon_cv from the given index in `_polygon_cv`
     void getCvPolygonFromIdx(const std::vector<int>& in_polygon_idx, std::vector<cv::Point2f>& out_polygon_cv);
     
@@ -81,3 +84,4 @@ private:
     std::vector<std::vector<int> > _result_polygon_idx; // generate polygons index considering the topography
 };  
 
+#endif
