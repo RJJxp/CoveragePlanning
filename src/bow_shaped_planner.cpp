@@ -16,20 +16,41 @@ bool BowShapedPlanner::coveragePlan(const ros_msgs::Odometry& odometry,
                                     const std::vector<RjpPoint>& sweeping_area,
                                     std::vector<RjpTrajectory>& multi_traj) {
     multi_traj.clear();
-    if(1) {
-        PolygonDecomposition pdc;
-        std::vector<std::vector<RjpPoint> > split_sweeping_area;
-        pdc.decomposePolygon(sweeping_area, split_sweeping_area);
-        std::cout << "****************  decompose finished  ****************" << std::endl;
-        for (int i = 0; i < split_sweeping_area.size(); ++i) {
-            RjpTrajectory sub_traj;
-            plan4ConvexPolygon(split_sweeping_area[i], sub_traj);
-            multi_traj.push_back(sub_traj);
+
+    PolygonDecomposition pdc;
+    std::vector<std::vector<RjpPoint> > split_sweeping_area;
+    pdc.decomposePolygon(sweeping_area, split_sweeping_area);
+    // debug
+    cv::Mat my_panel(1000, 1000, CV_8UC3, cv::Scalar(40, 0, 0));
+    for (int i = 0; i < split_sweeping_area.size(); ++i) {
+        double x, y;
+        for (int j = 0; j < split_sweeping_area[i].size() - 1; ++j) {
+            x = split_sweeping_area[i][j].x;
+            y = split_sweeping_area[i][j].y;
+            cv::Point2f p1(x, y);
+            x = split_sweeping_area[i][j + 1].x;
+            y = split_sweeping_area[i][j + 1].y;
+            cv::Point2f p2(x, y);
+            cv::line(my_panel, p1, p2, cv::Scalar(0, 200, 0), 2);
         }
-        return true;
-    } else {
-        return false;
+        x = split_sweeping_area[i][split_sweeping_area[i].size() - 1].x;
+        y = split_sweeping_area[i][split_sweeping_area[i].size() - 1].y;
+        cv::Point2f p1(x, y);
+        x = split_sweeping_area[i][0].x;
+        y = split_sweeping_area[i][0].y;
+        cv::Point2f p2(x, y);
+        cv::line(my_panel, p1, p2, cv::Scalar(0, 200, 0), 2);
     }
+    cv::imshow("split_polygons", my_panel);
+    cv::waitKey(0);
+    std::cout << "****************  decompose finished  ****************" << std::endl;
+    for (int i = 0; i < split_sweeping_area.size(); ++i) {
+        RjpTrajectory sub_traj;
+        plan4ConvexPolygon(split_sweeping_area[i], sub_traj);
+        multi_traj.push_back(sub_traj);
+    }
+    return true;
+
 }
 
 bool BowShapedPlanner::plan4ConvexPolygon(const std::vector<RjpPoint>& in_sweeping_area,
@@ -242,18 +263,18 @@ bool BowShapedPlanner::getTurnPointOfBowShape(const std::vector<RjpPoint>& in_sw
     // }
 
     // for visualization debug
-    cv::Mat my_panel(1000, 1000, CV_8UC3, cv::Scalar(0, 0, 0));
-    for (int i = 0; i < out_ori_path.size(); ++i) {
-        cv::Point2f tmp_cv_pt;
-        tmp_cv_pt.x = cos(_rotate_angle) * out_ori_path[i].first.x + sin(_rotate_angle) * out_ori_path[i].first.y;
-        tmp_cv_pt.y = sin(-_rotate_angle) * out_ori_path[i].first.x + cos(_rotate_angle) * out_ori_path[i].first.y;
-        cv::circle(my_panel, tmp_cv_pt, 3, cv::Scalar(255, 255, 0), 1, CV_FILLED);
-        tmp_cv_pt.x = cos(_rotate_angle) * out_ori_path[i].second.x + sin(_rotate_angle) * out_ori_path[i].second.y;
-        tmp_cv_pt.y = sin(-_rotate_angle) * out_ori_path[i].second.x + cos(_rotate_angle) * out_ori_path[i].second.y;
-        cv::circle(my_panel, tmp_cv_pt, 3, cv::Scalar(255, 255, 0), 1, CV_FILLED);
-    }
-    cv::imshow("turn points", my_panel);
-    cv::waitKey(0);
+    // cv::Mat my_panel(1000, 1000, CV_8UC3, cv::Scalar(0, 0, 0));
+    // for (int i = 0; i < out_ori_path.size(); ++i) {
+    //     cv::Point2f tmp_cv_pt;
+    //     tmp_cv_pt.x = cos(_rotate_angle) * out_ori_path[i].first.x + sin(_rotate_angle) * out_ori_path[i].first.y;
+    //     tmp_cv_pt.y = sin(-_rotate_angle) * out_ori_path[i].first.x + cos(_rotate_angle) * out_ori_path[i].first.y;
+    //     cv::circle(my_panel, tmp_cv_pt, 3, cv::Scalar(255, 255, 0), 1, CV_FILLED);
+    //     tmp_cv_pt.x = cos(_rotate_angle) * out_ori_path[i].second.x + sin(_rotate_angle) * out_ori_path[i].second.y;
+    //     tmp_cv_pt.y = sin(-_rotate_angle) * out_ori_path[i].second.x + cos(_rotate_angle) * out_ori_path[i].second.y;
+    //     cv::circle(my_panel, tmp_cv_pt, 3, cv::Scalar(255, 255, 0), 1, CV_FILLED);
+    // }
+    // cv::imshow("turn points", my_panel);
+    // cv::waitKey(0);
 
     return true;
 }

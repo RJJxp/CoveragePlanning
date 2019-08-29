@@ -56,19 +56,9 @@ bool PolygonDecomposition::convertRos2CvPolygon(const std::vector<RjpPoint>& in_
     }
 
     // find the ymin
-    int y_min_idx;
-    double y_min;
-    for (int i = 0; i < in_polygon.size(); ++i) {
-        if (i == 0) {
-            y_min_idx = i;
-            y_min = in_polygon[i].y;
-        } else {
-            if (in_polygon[i].y < y_min) {
-                y_min = in_polygon[i].y;
-                y_min_idx = i;
-            }
-        }
-    }
+    auto ymin_iter = std::min_element(in_polygon.begin(), in_polygon.end(),
+                                     [](RjpPoint p1, RjpPoint p2){return p1.y < p2.y;});
+    int y_min_idx = std::distance(in_polygon.begin(), ymin_iter);
     
     // calculate the cross product
     double cross_product;

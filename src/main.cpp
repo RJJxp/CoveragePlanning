@@ -3,7 +3,7 @@
 #include "bow_shaped_planner.h"
 #include "decomposition.h"
 
-void createSweepingArea(std::vector<cv::Point2f>& sweeping_area_cv, std::vector<RjpPoint>& sweep_area);
+void createSweepingArea(std::vector<cv::Point2f>& sweeping_area_cv, std::vector<RjpPoint>& sweeping_area);
 void drawSweepAreanAndPath(const std::vector<cv::Point2f>& sweeping_area_cv, const RjpTrajectory& traject_ros);
 void drawSweepAreanAndPath(const std::vector<cv::Point2f>& sweeping_area_cv, const std::vector<RjpTrajectory>& traject_ros);
 
@@ -11,22 +11,13 @@ void drawSweepAreanAndPath(const std::vector<cv::Point2f>& sweeping_area_cv, con
 int main(int argc, char* argv[]) {    
     // for visualization
     std::vector<cv::Point2f> sweeping_area_cv;
-    std::vector<cv::Point2f> traject_cv;
     // for calculation
     std::vector<RjpPoint> sweeping_area;
     std::vector<RjpTrajectory> traject;
     ros_msgs::Odometry odom;
-
     // initial the sweeping_area 
     createSweepingArea(sweeping_area_cv, sweeping_area);
-/*
-    std::vector<std::vector<RjpPoint> > split_polygons;
-    PolygonDecomposition* pde = new PolygonDecomposition();
-    pde->decomposePolygon(sweeping_area, split_polygons);
-    std::cout << "success" << std::endl;
-*/
 
-   
     BowShapedPlanner* bsp = new BowShapedPlanner();
     if (!bsp->coveragePlan(odom, sweeping_area, traject)) {
         std::cout << "converge plan failed" << std::endl;
@@ -44,7 +35,8 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-void createSweepingArea(std::vector<cv::Point2f>& sweeping_area_cv, std::vector<RjpPoint>& sweep_area) {
+
+void createSweepingArea(std::vector<cv::Point2f>& sweeping_area_cv, std::vector<RjpPoint>& sweeping_area) {
 
     // // test 01
     // sweeping_area_cv.push_back(cv::Point2f(100, 300));
@@ -88,13 +80,13 @@ void createSweepingArea(std::vector<cv::Point2f>& sweeping_area_cv, std::vector<
     // sweeping_area_cv.push_back(cv::Point2f(100, 100));
     // sweeping_area_cv.push_back(cv::Point2f(400, 100));
     // sweeping_area_cv.push_back(cv::Point2f(350, 200));
-
     for (int i = 0; i < sweeping_area_cv.size(); ++i) {
-        RjpPoint tmp_vec;
-        tmp_vec.x = sweeping_area_cv[i].x;
-        tmp_vec.y = sweeping_area_cv[i].y;
-        sweep_area.push_back(tmp_vec);
+        RjpPoint pt;
+        pt.x = sweeping_area_cv[i].x;
+        pt.y = sweeping_area_cv[i].y;
+        sweeping_area.push_back(pt);
     }
+
     cv::Mat my_panel(1000, 1000, CV_8UC3, cv::Scalar(40, 0, 0));
     // cv::polylines(my_panel, sweeping_area_cv, true, cv::Scalar(45, 90, 135), 4);
     for (int i = 0; i < sweeping_area_cv.size() - 1; ++i) {
