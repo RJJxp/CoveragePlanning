@@ -43,6 +43,7 @@ bool BowShapedPlanner::coveragePlan(const ros_msgs::Odometry& odometry,
     }
     cv::imshow("split_polygons", my_panel);
     cv::waitKey(0);
+    
     std::cout << "****************  decompose finished  ****************" << std::endl;
     for (int i = 0; i < split_sweeping_area.size(); ++i) {
         RjpTrajectory sub_traj;
@@ -56,56 +57,57 @@ bool BowShapedPlanner::coveragePlan(const ros_msgs::Odometry& odometry,
 bool BowShapedPlanner::plan4ConvexPolygon(const std::vector<RjpPoint>& in_sweeping_area,
                                           RjpTrajectory& out_traj) {
     std::vector<RjpPoint> my_sweeping_area = {};
-        for (int i = 0; i < in_sweeping_area.size(); ++i) {
-            my_sweeping_area.push_back(in_sweeping_area[i]);
-        }
+    for (int i = 0; i < in_sweeping_area.size(); ++i) {
+        my_sweeping_area.push_back(in_sweeping_area[i]);
+    }
 
-        my_sweeping_area.push_back(in_sweeping_area[0]);
-        // use varible `my_sweeping_area` to replace `sweeping_area`
-        // ATTENTION: `my_sweeping_area` has the same first and last element
-        std::cout << "finish copying sweeping area"<< std::endl;
+    my_sweeping_area.push_back(in_sweeping_area[0]);
+    // use varible `my_sweeping_area` to replace `sweeping_area`
+    // ATTENTION: `my_sweeping_area` has the same first and last element
+    std::cout << "finish copying sweeping area"<< std::endl;
 
-        double rotate_angle = 0.0;
-        if (!getRotateAngle(my_sweeping_area, rotate_angle)) {
-            std::cout << "get rotate angle failed" << std::endl;
-            return false;
-        }
-        // for debug 
-        _rotate_angle = rotate_angle;
+    double rotate_angle = 0.0;
+    if (!getRotateAngle(my_sweeping_area, rotate_angle)) {
+        std::cout << "get rotate angle failed" << std::endl;
+        return false;
+    }
+    // for debug 
+    _rotate_angle = rotate_angle;
 
-        std::vector<RjpPoint> my_sweeping_area_rotate = {};
-        if(!rotateSweepArea(my_sweeping_area, rotate_angle, my_sweeping_area_rotate)) {
-            std::cout << "rotate sweep area failed" << std::endl;
-            return false;
-        }
+    std::vector<RjpPoint> my_sweeping_area_rotate = {};
+    if(!rotateSweepArea(my_sweeping_area, rotate_angle, my_sweeping_area_rotate)) {
+        std::cout << "rotate sweep area failed" << std::endl;
+        return false;
+    }
+    
+    std::vector<std::pair<RjpPoint, RjpPoint> > ori_path;
+    if (!getTurnPointOfBowShape(my_sweeping_area_rotate, ori_path)) {
+        std::cout << "get turn point of bow-shape failed" << std::endl;
+        return false;
+    }
+
+    std::vector<RjpPoint> result_path;
+    if (!getStraightPointOfBowShape(ori_path, _ref_point_long_dist, _ref_point_short_dist, result_path)) {
+        std::cout << "get straight line points failed" << std::endl;
+        return false;
+    }
+
+    std::vector<RjpPoint> result_path_rotate;
+    if (!rotateSweepArea(result_path, -rotate_angle, result_path_rotate)) {
+        std::cout << "get result path rotate failed" << std::endl;
+        return false;
+    }
+
+    RjpPoint tmp_pose;
+    for (int i = 0; i < result_path_rotate.size(); ++i) {
+        // std::cout << "x " << result_path_rotate[i].x << std::endl << "y " << result_path_rotate[i].y << std::endl;
         
-        std::vector<std::pair<RjpPoint, RjpPoint> > ori_path;
-        if (!getTurnPointOfBowShape(my_sweeping_area_rotate, ori_path)) {
-            std::cout << "get turn point of bow-shape failed" << std::endl;
-            return false;
-        }
-
-        std::vector<RjpPoint> result_path;
-        if (!getStraightPointOfBowShape(ori_path, _ref_point_long_dist, _ref_point_short_dist, result_path)) {
-            std::cout << "get straight line points failed" << std::endl;
-            return false;
-        }
-
-        std::vector<RjpPoint> result_path_rotate;
-        if (!rotateSweepArea(result_path, -rotate_angle, result_path_rotate)) {
-            std::cout << "get result path rotate failed" << std::endl;
-            return false;
-        }
-
-        RjpPoint tmp_pose;
-        for (int i = 0; i < result_path_rotate.size(); ++i) {
-            // std::cout << "x " << result_path_rotate[i].x << std::endl << "y " << result_path_rotate[i].y << std::endl;
-            tmp_pose.x = result_path_rotate[i].x;
-            tmp_pose.y = result_path_rotate[i].y;
-            out_traj.pts.push_back(tmp_pose);
-        }
-        std::cout << "coverage plan succeed" << std::endl;
-        return true;
+        tmp_pose.x = result_path_rotate[i].x;
+        tmp_pose.y = result_path_rotate[i].y;
+        out_traj.pts.push_back(tmp_pose);
+    }
+    std::cout << "coverage plan succeed" << std::endl;
+    return true;
 }
 
 bool BowShapedPlanner::getRotateAngle(const std::vector<RjpPoint>& in_sweeping_area,
