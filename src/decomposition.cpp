@@ -220,8 +220,15 @@ bool PolygonDecomposition::decomposeIt() {
             copy_result_polygon_idx.push_back(split_polygons[0]);
             copy_result_polygon_idx.push_back(split_polygons[1]);
         }
+        bool minus_one = false;
         for (int i = 0; i < concave_polygon_idx.size(); ++i) {
-            copy_result_polygon_idx.erase(copy_result_polygon_idx.begin() + concave_polygon_idx[i]);
+            if (minus_one) {
+                copy_result_polygon_idx.erase(copy_result_polygon_idx.begin() + concave_polygon_idx[i]);
+                minus_one = true;
+            } else {
+                copy_result_polygon_idx.erase(copy_result_polygon_idx.begin() + concave_polygon_idx[i] - 1);
+            }
+            
         }
         _result_polygon_idx = copy_result_polygon_idx;
         
