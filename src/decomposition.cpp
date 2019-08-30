@@ -222,7 +222,7 @@ bool PolygonDecomposition::decomposeIt() {
         }
         bool minus_one = false;
         for (int i = 0; i < concave_polygon_idx.size(); ++i) {
-            if (minus_one) {
+            if (!minus_one) {
                 copy_result_polygon_idx.erase(copy_result_polygon_idx.begin() + concave_polygon_idx[i]);
                 minus_one = true;
             } else {
