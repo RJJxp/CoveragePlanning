@@ -16,22 +16,6 @@ Compute a bow-shape complete coverage path for every polygon
 
 - OpenCV
 
-- Others (You could replace with your own Struct)
-
-  The ROS messages customized including
-
-  -  `ros_msgs::Vector2` 
-    - float64 x
-    - float64 y
-  - `ros_msgs::PoseWithVelocity` 
-    - Vector3 position (x, y, z)
-    - Quaternion orietation (x, y, z, w)
-    - float64 velocity
-    - int32 flag 
-  - `ros_msgs::Trajectory` 
-    - PoseWithVelocity[] poses
-
-
 
 ## 2. Reference
 
