@@ -2,6 +2,18 @@
 
 ## 0. Overview
 
+<font color=red> **BUG when confronted with complicated polygons**</font> 
+
+Here is the good one
+
+![good_one](./doc/result_03.png)
+
+Then we have got a bad one
+
+![bad_one](./doc/result_04.png)
+
+<font color=blue>**the bug lies in PolygonDecomposition::DecomposeIt() where the processing of erasing polygons and adding polygons** </font>
+
 Decompose the given polygon if concave
 
 Compute a bow-shape complete coverage path for every polygon
