@@ -1,5 +1,7 @@
 # Coverage Planning
 
+Recommend use CGAL library to finish this coverage planning due the bugs of this repository.
+
 ## 0. Overview
 
 <font color=red> **BUG when confronted with complicated polygons**</font> 
